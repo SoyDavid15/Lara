@@ -1,35 +1,84 @@
-import { Tabs } from 'expo-router';
+import { withLayoutContext } from 'expo-router';
 import React from 'react';
+import { StyleSheet, Platform, View, Text, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import { useAppTheme } from '@/lib/ThemeProvider';
+import { scale, verticalScale, ms, fs } from '@/lib/responsive';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+const { Navigator } = createMaterialTopTabNavigator();
+
+export const MaterialTopTabs = withLayoutContext(Navigator);
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { colors, isDark } = useAppTheme();
+  const styles = React.useMemo(() => getStyles(colors, isDark), [colors, isDark]);
 
   return (
-    <Tabs
+    <MaterialTopTabs
+      tabBarPosition="bottom"
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
+        tabBarActiveTintColor: colors.text,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: styles.tabBar,
+        tabBarIndicatorStyle: { display: 'none' },
+        tabBarPressColor: 'transparent',
+        tabBarLabelStyle: styles.tabBarLabel,
+        tabBarContentContainerStyle: styles.tabBarContent,
       }}>
-      <Tabs.Screen
+      <MaterialTopTabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'FEED',
+          tabBarLabel: 'FEED',
+          tabBarIcon: ({ color }: { color: string }) => (
+            <Ionicons name="newspaper-outline" size={ms(24)} color={color} />
+          ),
         }}
       />
-      <Tabs.Screen
-        name="explore"
+      <MaterialTopTabs.Screen
+        name="mapa"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'MAPA',
+          tabBarLabel: 'MAPA',
+          tabBarIcon: ({ color }: { color: string }) => (
+            <Ionicons name="map-outline" size={ms(24)} color={color} />
+          ),
         }}
       />
-    </Tabs>
+    </MaterialTopTabs>
   );
 }
+
+const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
+  tabBar: {
+    position: 'absolute',
+    bottom: verticalScale(25),
+    left: scale(20),
+    right: scale(20),
+    backgroundColor: isDark ? '#000000' : '#ffffff',
+    borderRadius: ms(20),
+    height: verticalScale(75),
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    borderWidth: 1,
+    borderColor: colors.border,
+    elevation: 5,
+    shadowColor: isDark ? '#000' : '#888',
+    shadowOffset: { width: 0, height: verticalScale(10) },
+    shadowOpacity: 0.3,
+    shadowRadius: ms(10),
+    overflow: 'hidden',
+  },
+  tabBarContent: {
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabBarLabel: {
+    fontSize: fs(10),
+    fontWeight: 'bold',
+    letterSpacing: scale(1),
+    textTransform: 'uppercase',
+  },
+});
