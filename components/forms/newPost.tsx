@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Dimensions, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { scale, verticalScale, ms, fs } from '@/lib/responsive';
@@ -58,25 +58,27 @@ const NewPost = ({ isVisible, onClose }: NewPostProps) => {
             }
             
             Alert.alert("Error de Publicación", errorMessage);
-        } finally {
-            setIsPublishing(false);
-        }
-    };
+       } finally {
+         setIsPublishing(false);
+       }
+     };
 
-    useEffect(() => {
-        if (isVisible) {
-            setIsMounted(true);
-            scale.value = withTiming(1, { duration: 300 });
-            opacity.value = withTiming(1, { duration: 300 });
-        } else {
-            scale.value = withTiming(0, { duration: 200 });
-            opacity.value = withTiming(0, { duration: 200 }, (finished) => {
-                if (finished) {
-                    runOnJS(setIsMounted)(false);
-                }
-            });
-        }
-    }, [isVisible]);
+     /* eslint-disable react-hooks/exhaustive-deps */
+     useEffect(() => {
+         if (isVisible) {
+             setIsMounted(true);
+             scale.value = withTiming(1, { duration: 300 });
+             opacity.value = withTiming(1, { duration: 300 });
+         } else {
+             scale.value = withTiming(0, { duration: 200 });
+             opacity.value = withTiming(0, { duration: 200 }, (finished) => {
+                 if (finished) {
+                     runOnJS(setIsMounted)(false);
+                 }
+             });
+         }
+       }, [isVisible]);
+     /* eslint-enable react-hooks/exhaustive-deps */
 
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],

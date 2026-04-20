@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Dimensions, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Dimensions, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
 import { db, auth } from '@/lib/firebase';
@@ -145,12 +145,13 @@ const NewAlert = ({ isVisible, onClose }: NewAlertProps) => {
         }
     };
 
-    const resetForm = () => {
-        setSelectedType(null);
-        setDescription('');
-    };
+   const resetForm = () => {
+     setSelectedType(null);
+     setDescription('');
+   };
 
-    useEffect(() => {
+   /* eslint-disable react-hooks/exhaustive-deps */
+   useEffect(() => {
         if (isVisible) {
             setIsMounted(true);
             scaleAnim.value = withTiming(1, { duration: 300 });
@@ -163,7 +164,8 @@ const NewAlert = ({ isVisible, onClose }: NewAlertProps) => {
                 }
             });
         }
-    }, [isVisible]);
+      }, [isVisible]);
+   /* eslint-enable react-hooks/exhaustive-deps */
 
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scaleAnim.value }],

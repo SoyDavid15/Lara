@@ -1,11 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Dimensions, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, ScrollView, Keyboard } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { auth } from '@/lib/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useAppTheme } from '@/lib/ThemeProvider';
 import { scale, verticalScale, ms, fs } from '@/lib/responsive';
-
-const { width } = Dimensions.get('window');
 
 interface LoginProps {
     onSwitchToRegister?: () => void;

@@ -9,8 +9,6 @@ import { useAppTheme } from '@/lib/ThemeProvider';
 import { useSafeWalk } from '@/lib/SafeWalkContext';
 import { scale, verticalScale, ms, fs } from '@/lib/responsive';
 
-const LOCATION_TASK_NAME = 'safewalk-location';
-
 function getDistanceFromLatLonInMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371000;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -27,7 +25,7 @@ export default function SafeWalkScreen() {
   const navigation = useNavigation();
   const { colors, isDark } = useAppTheme();
   const styles = useMemo(() => getStyles(colors, isDark), [colors, isDark]);
-  const { walkState, setWalkState, setLocation, isInactive } = useSafeWalk();
+  const { walkState, setWalkState, setLocation } = useSafeWalk();
   const [isTracking, setIsTracking] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -106,7 +104,7 @@ export default function SafeWalkScreen() {
         locationSubRef.current = null;
       }
     };
-  }, [isTracking]);
+   }, [isTracking, setLocation, setWalkState]);
 
   const handleSafePress = () => {
     setWalkState('TRACKING');

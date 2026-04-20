@@ -1,10 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { ms, scale, verticalScale, fs } from '@/lib/responsive';
 import { useAppTheme } from '@/lib/ThemeProvider';
 import { Ionicons } from '@expo/vector-icons';
-
-const { width } = Dimensions.get('window');
 
 const AdCard = () => {
     const { colors, isDark } = useAppTheme();

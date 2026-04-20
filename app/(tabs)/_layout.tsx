@@ -1,6 +1,6 @@
 import { withLayoutContext } from 'expo-router';
 import React from 'react';
-import { StyleSheet, Platform, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { useAppTheme } from '@/lib/ThemeProvider';

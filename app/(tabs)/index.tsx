@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import News from '@/components/screens/news';
-import { useAppTheme } from '@/lib/ThemeProvider';
+import News from '../../components/screens/news';
+import { useAppTheme } from '../../lib/ThemeProvider';
 
 export default function HomeScreen() {
   const { colors, isDark } = useAppTheme();

@@ -24,7 +24,7 @@ const { Navigator } = createDrawerNavigator();
 export const Drawer = withLayoutContext(Navigator);
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
-  const { colors, isDark } = useAppTheme();
+  const { colors } = useAppTheme();
   const { t } = useTranslation();
   const styles = useMemo(() => getDrawerStyles(colors), [colors]);
 
@@ -100,7 +100,7 @@ function RootLayoutContent() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      if (initializing) setInitializing(false);
+      setInitializing(false);
     });
     return unsubscribe;
   }, []);

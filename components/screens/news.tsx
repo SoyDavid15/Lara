@@ -2,26 +2,24 @@ import { auth, db } from '@/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from 'expo-router';
-import { collection, getDocs, limit, onSnapshot, orderBy, query, QueryDocumentSnapshot, startAfter, Timestamp, where, writeBatch, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, getDocs, limit, onSnapshot, orderBy, query, QueryDocumentSnapshot, startAfter, Timestamp, where, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import React, { useEffect, useState, useMemo } from 'react';
-import { ActivityIndicator, Dimensions, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/lib/ThemeProvider';
 import { scale, verticalScale, ms, fs } from '@/lib/responsive';
 import NewPost from '@/components/forms/newPost';
 import AdCard from '@/components/common/AdCard';
 
-const { width, height } = Dimensions.get('window');
-
 interface Post {
-    id: string;
-    title: string;
-    body: string;
-    author: string;
-    createdAt: Timestamp | null;
-    expiresAt?: Timestamp | null;
-    likes?: number;
-    likedBy?: string[];
+  id: string;
+  title: string;
+  body: string;
+  author: string;
+  createdAt: Timestamp | null;
+  expiresAt?: Timestamp | null;
+  likes?: number;
+  likedBy?: string[];
 }
 
 const News = () => {
@@ -144,9 +142,10 @@ const News = () => {
         } finally {
             setLoadingMore(false);
         }
-    };
-
-    useEffect(() => {
+     };
+ 
+      /* eslint-disable react-hooks/exhaustive-deps */
+      useEffect(() => {
         const now = Timestamp.now();
         const q = query(
             collection(db, "posts"),
@@ -168,7 +167,8 @@ const News = () => {
         });
 
         return () => unsubscribe();
-    }, []);
+      }, []);
+      /* eslint-enable react-hooks/exhaustive-deps */
 
     const renderPost = ({ item }: { item: Post }) => {
         const isLiked = currentUser && item.likedBy?.includes(currentUser.uid);
