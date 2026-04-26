@@ -1,3 +1,16 @@
+/**
+ * options.tsx — Pantalla de Configuración
+ *
+ * Accesible desde el menú lateral → "Opciones".
+ *
+ * ¿Qué permite hacer?
+ *   - Cambiar entre modo claro/oscuro con un switch
+ *   - Cambiar el idioma de la app (Español / Inglés)
+ *   - Ver la versión de la app
+ *   - Cerrar sesión
+ *   - Eliminar cuenta permanentemente
+ */
+
 import { auth } from '@/lib/firebase';
 import { useAppTheme } from '@/lib/ThemeProvider';
 import { useTranslation } from '@/lib/LanguageContext';
@@ -13,34 +26,61 @@ export default function OptionsScreen() {
   const navigation = useNavigation();
   const { isDark, toggleTheme, colors } = useAppTheme();
   const { locale, setLocale, t } = useTranslation();
+
+  // Controla si el panel de selección de idioma está abierto o cerrado
   const [isLanguageExpanded, setIsLanguageExpanded] = React.useState(false);
+
+  // Recalcular estilos solo cuando cambia el tema
   const styles = useMemo(() => getStyles(colors, isDark), [colors, isDark]);
 
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // FUNCIÓN: handleLogout
+  // Cierra la sesión del usuario con Firebase.
+  // Cuando signOut() termina, onAuthStateChanged en _layout.tsx detecta el
+  // cambio y muestra automáticamente la pantalla de Login.
+  // ─────────────────────────────────────────────────────────────────────────
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      // navigation is handled by RootLayout (onAuthStateChanged)
+      // La redirección al login ocurre automáticamente vía onAuthStateChanged en _layout.tsx
     } catch (error) {
       console.error("Error logging out:", error);
       Alert.alert(t('common.error'), t('options.logoutError'));
     }
   };
 
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // COMPONENTE: LanguageItem
+  // Renderiza una opción de idioma dentro del panel expandible.
+  // Muestra una marca ✓ si ese idioma está activo.
+  //
+  // Props:
+  //   label → Nombre del idioma ("Español", "English")
+  //   code  → Código del idioma ("es", "en")
+  //   icon  → Emoji de la bandera ("🇪🇸", "🇺🇸")
+  // ─────────────────────────────────────────────────────────────────────────
   const LanguageItem = ({ label, code, icon }: { label: string, code: string, icon: string }) => {
-    const isSelected = locale === code;
+    const isSelected = locale === code; // ¿Es este el idioma activo?
     return (
-      <TouchableOpacity 
-        style={[styles.languageOption, isSelected && styles.selectedLanguage]} 
+      <TouchableOpacity
+        style={[styles.languageOption, isSelected && styles.selectedLanguage]}
         onPress={() => {
-          setLocale(code as any);
+          setLocale(code as any); // Cambiar idioma globalmente
         }}
       >
+        {/* Bandera del idioma */}
         <View style={styles.languageIconWrap}>
           <Text style={{ fontSize: ms(16) }}>{icon}</Text>
         </View>
+
+        {/* Nombre del idioma (negrita si está seleccionado) */}
         <Text style={[styles.languageText, isSelected && { fontWeight: '700', color: colors.primary }]}>
           {label}
         </Text>
+
+        {/* Check mark si está seleccionado */}
         {isSelected && (
           <Ionicons name="checkmark" size={ms(18)} color={colors.primary} />
         )}
@@ -48,7 +88,16 @@ export default function OptionsScreen() {
     );
   };
 
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // FUNCIÓN: handleDeleteAccount
+  // Elimina permanentemente la cuenta del usuario de Firebase Auth.
+  //
+  // Firebase requiere que el usuario haya iniciado sesión recientemente
+  // (auth/requires-recent-login). Si no, hay que pedirle que haga login de nuevo.
+  // ─────────────────────────────────────────────────────────────────────────
   const handleDeleteAccount = () => {
+    // Mostrar diálogo de confirmación antes de proceder
     Alert.alert(
       t('options.deleteAccount'),
       t('options.deleteConfirmation'),
@@ -62,11 +111,13 @@ export default function OptionsScreen() {
               const user = auth.currentUser;
               if (user) {
                 await deleteUser(user);
-                // logout logic will trigger onAuthStateChanged
+                // Al eliminar, onAuthStateChanged detecta que no hay usuario
+                // y muestra el Login automáticamente
               }
             } catch (error: any) {
               console.error("Error deleting account:", error);
               if (error.code === 'auth/requires-recent-login') {
+                // Firebase requiere autenticación reciente para operaciones críticas
                 Alert.alert(
                   t('options.securityError'),
                   t('options.reloginRequired')
@@ -81,9 +132,16 @@ export default function OptionsScreen() {
     );
   };
 
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.container}>
+
+      {/* ── HEADER ─────────────────────────────────────────────────────── */}
       <View style={styles.header}>
+        {/* Botón menú hamburguesa: abre el drawer lateral */}
         <TouchableOpacity
           onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
           style={styles.menuButton}
@@ -95,15 +153,18 @@ export default function OptionsScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
 
+        {/* ── SECCIÓN: Configuración de la app ──────────────────────────── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('options.appSection')}</Text>
 
-          {/* Theme Toggle */}
+          {/* ── Switch: Modo oscuro ────────────────────────────────────── */}
           <View style={styles.optionItem}>
             <View style={[styles.iconContainer, { backgroundColor: isDark ? '#333' : '#e0e0e0' }]}>
+              {/* El icono cambia entre luna (oscuro) y sol (claro) */}
               <Ionicons name={isDark ? "moon-outline" : "sunny-outline"} size={22} color={colors.text} />
             </View>
             <Text style={styles.optionText}>{t('options.darkMode')}</Text>
+            {/* Switch que llama a toggleTheme() del ThemeProvider */}
             <Switch
               trackColor={{ false: "#ccc", true: colors.primary }}
               thumbColor={"#fff"}
@@ -112,26 +173,30 @@ export default function OptionsScreen() {
             />
           </View>
 
-          {/* Language Selector (Collapsible) */}
+          {/* ── Selector de idioma (expandible) ───────────────────────── */}
           <View style={styles.collapsibleContainer}>
-            <TouchableOpacity 
-              style={[styles.optionItem, { marginBottom: 0, borderBottomWidth: isLanguageExpanded ? 0 : 1 }]} 
+            {/* Fila clickeable que expande/colapsa la lista de idiomas */}
+            <TouchableOpacity
+              style={[styles.optionItem, { marginBottom: 0, borderBottomWidth: isLanguageExpanded ? 0 : 1 }]}
               onPress={() => setIsLanguageExpanded(!isLanguageExpanded)}
             >
               <View style={[styles.iconContainer, { backgroundColor: isDark ? '#333' : '#e0e0e0' }]}>
                 <Ionicons name="language-outline" size={22} color={colors.text} />
               </View>
               <Text style={styles.optionText}>{t('options.language')}</Text>
+              {/* Muestra el idioma activo */}
               <Text style={styles.optionValue}>
                 {locale === 'es' ? t('options.spanish') : t('options.english')}
               </Text>
-              <Ionicons 
-                name={isLanguageExpanded ? "chevron-up" : "chevron-down"} 
-                size={ms(20)} 
-                color="#666" 
+              {/* Flecha que rota según si está expandido o no */}
+              <Ionicons
+                name={isLanguageExpanded ? "chevron-up" : "chevron-down"}
+                size={ms(20)}
+                color="#666"
               />
             </TouchableOpacity>
 
+            {/* Lista de idiomas (solo visible si isLanguageExpanded = true) */}
             {isLanguageExpanded && (
               <View style={styles.languageList}>
                 <LanguageItem label={t('options.spanish')} code="es" icon="🇪🇸" />
@@ -140,6 +205,7 @@ export default function OptionsScreen() {
             )}
           </View>
 
+          {/* ── Versión de la app ──────────────────────────────────────── */}
           <View style={styles.optionItem}>
             <View style={[styles.iconContainer, { backgroundColor: isDark ? '#333' : '#e0e0e0' }]}>
               <Ionicons name="information-circle-outline" size={22} color={colors.text} />
@@ -147,9 +213,11 @@ export default function OptionsScreen() {
             <Text style={styles.optionText}>{t('options.version')} 1.0.0</Text>
           </View>
 
+          {/* ── SECCIÓN: Gestión de cuenta ──────────────────────────────── */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('options.accountSection')}</Text>
 
+            {/* ── Cerrar sesión ─────────────────────────────────────────── */}
             <TouchableOpacity style={styles.optionItem} onPress={handleLogout}>
               <View style={[styles.iconContainer, { backgroundColor: isDark ? '#333' : '#e0e0e0' }]}>
                 <Ionicons name="log-out-outline" size={22} color={colors.text} />
@@ -158,11 +226,14 @@ export default function OptionsScreen() {
               <Ionicons name="chevron-forward" size={ms(20)} color="#666" />
             </TouchableOpacity>
 
+            {/* ── Eliminar cuenta (acción destructiva → fondo rojo) ──────── */}
             <TouchableOpacity style={styles.optionItem} onPress={handleDeleteAccount}>
               <View style={[styles.iconContainer, { backgroundColor: colors.danger }]}>
                 <Ionicons name="trash-outline" size={ms(22)} color="#fff" />
               </View>
-              <Text style={[styles.optionText, { color: colors.danger }]}>{t('options.deleteAccount')}</Text>
+              <Text style={[styles.optionText, { color: colors.danger }]}>
+                {t('options.deleteAccount')}
+              </Text>
               <Ionicons name="chevron-forward" size={ms(20)} color="#666" />
             </TouchableOpacity>
 
@@ -173,11 +244,12 @@ export default function OptionsScreen() {
   );
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ESTILOS
+// ─────────────────────────────────────────────────────────────────────────────
 const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     paddingHorizontal: scale(20),
     paddingTop: verticalScale(10),
@@ -197,9 +269,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: scale(20),
     paddingTop: verticalScale(10),
   },
-  section: {
-    marginBottom: verticalScale(35),
-  },
+  section: { marginBottom: verticalScale(35) },
   sectionTitle: {
     fontSize: fs(13),
     fontWeight: '700',
@@ -209,6 +279,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     marginBottom: verticalScale(15),
     paddingLeft: scale(5),
   },
+  // Fila de cada opción (icono + texto + control)
   optionItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -220,6 +291,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  // Cuadrado de fondo del icono de cada opción
   iconContainer: {
     width: ms(36),
     height: ms(36),
@@ -229,7 +301,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     marginRight: scale(15),
   },
   optionText: {
-    flex: 1,
+    flex: 1, // Ocupa el espacio restante empujando el control a la derecha
     fontSize: fs(17),
     fontWeight: '500',
     color: colors.text,
@@ -239,6 +311,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     color: colors.textSecondary,
     marginRight: scale(8),
   },
+  // Contenedor del selector de idioma (para que border-radius funcione con el panel expandible)
   collapsibleContainer: {
     backgroundColor: colors.card,
     borderRadius: ms(16),
@@ -259,8 +332,9 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: ms(12),
     marginTop: verticalScale(2),
   },
+  // Fondo de acento cuando el idioma está seleccionado
   selectedLanguage: {
-    backgroundColor: colors.primary + '10',
+    backgroundColor: colors.primary + '10', // Color primario con 10% de opacidad
   },
   languageIconWrap: {
     width: ms(32),

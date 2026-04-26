@@ -1,6 +1,28 @@
+/**
+ * translations.ts
+ *
+ * Diccionario de textos de la app LARA en todos los idiomas soportados.
+ *
+ * ¿Cómo agregar un nuevo texto?
+ *   1. Agrégalo en el objeto 'es' con la clave que quieras.
+ *   2. Agrégalo también en 'en' con la traducción al inglés.
+ *   3. Úsalo en cualquier componente con: t('seccion.clave')
+ *
+ * ¿Cómo agregar un nuevo idioma?
+ *   1. Agrega su código al tipo Locale (ej: 'fr' para francés).
+ *   2. Copia la estructura de 'es' y traduce todos los valores.
+ *   3. Actualiza el selector de idioma en options.tsx.
+ */
+
+// Tipo que define los códigos de idioma válidos
 export type Locale = 'es' | 'en';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// OBJETO DE TRADUCCIONES
+// Estructura: translations[idioma][sección][clave] = 'texto'
+// ─────────────────────────────────────────────────────────────────────────────
 export const translations = {
+  // ── ESPAÑOL ───────────────────────────────────────────────────────────────
   es: {
     options: {
       title: 'Opciones',
@@ -30,6 +52,7 @@ export const translations = {
       unverified: 'No verificada ⚠️',
       reportedAt: 'Reportado a las',
     },
+    // Textos del menú lateral (drawer)
     drawer: {
         home: 'Inicio',
         user: 'Usuario',
@@ -37,6 +60,8 @@ export const translations = {
         options: 'Opciones'
     }
   },
+
+  // ── INGLÉS ────────────────────────────────────────────────────────────────
   en: {
     options: {
       title: 'Options',
@@ -75,4 +100,5 @@ export const translations = {
   },
 };
 
+/** Tipo inferido de la estructura de traducciones en español (usado para type-safety) */
 export type TranslationKeys = typeof translations.es;
