@@ -13,7 +13,11 @@
       "infoPlist": {
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Lara necesita acceso a tu ubicación en segundo plano para rastrear tu trayecto y avisar a tus contactos en caso de emergencia.",
         "NSLocationAlwaysUsageDescription": "Lara necesita acceso permanente a tu ubicación para la función de acompañamiento seguro.",
-        "NSLocationWhenInUseUsageDescription": "Lara utiliza tu ubicación para mostrar alertas y reportes cercanos."
+        "NSLocationWhenInUseUsageDescription": "Lara utiliza tu ubicación para mostrar alertas y reportes cercanos.",
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ]
       }
     },
     "android": {
@@ -27,7 +31,10 @@
       },
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
       ]
     },
     "web": {
@@ -52,7 +59,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Lara necesita acceso a tu ubicación."
+          "locationAlwaysAndWhenInUsePermission": "Lara necesita acceso a tu ubicación para protegerte en segundo plano."
         }
       ],
       "expo-localization"

@@ -47,44 +47,49 @@ import FriendEmergencyModal from '@/components/common/FriendEmergencyModal';
 // Si algún amigo entra en estado 'ALERT', muestra el modal de emergencia.
 // ─────────────────────────────────────────────────────────────────────────────
 const FriendSafetyWatcher = () => {
+  const { t } = useTranslation();
   const [emergencyFriend, setEmergencyFriend] = useState<{uid: string, name: string} | null>(null);
   const currentUser = auth.currentUser;
 
   useEffect(() => {
     if (!currentUser) return;
 
-    // 1. Obtener la lista de amigos (Uids)
+    let unsubscribeStatus: (() => void) | null = null;
+
+    // 1. Escuchar la lista de amigos
     const friendsQuery = query(collection(db, 'users', currentUser.uid, 'friends'));
     
-    // Suscribirse a la lista de amigos
     const unsubscribeFriends = onSnapshot(friendsQuery, (snapshot) => {
+      // Limpiar el escucha anterior de estados si existe
+      if (unsubscribeStatus) unsubscribeStatus();
+
       const friendUids = snapshot.docs.map(doc => doc.id);
-      
       if (friendUids.length === 0) return;
 
-      // 2. Escuchar el estado de esos amigos (limitado a los primeros 30 por restricción de Firestore 'in')
+      // 2. Escuchar el estado de emergencia de esos amigos
       const statusQuery = query(
         collection(db, 'users'),
         where('walkState', '==', 'ALERT'),
         where('uid', 'in', friendUids.slice(0, 30))
       );
 
-      const unsubscribeStatus = onSnapshot(statusQuery, (statusSnapshot) => {
+      unsubscribeStatus = onSnapshot(statusQuery, (statusSnapshot) => {
         if (!statusSnapshot.empty) {
           const firstEmergency = statusSnapshot.docs[0];
           setEmergencyFriend({
             uid: firstEmergency.id,
-            name: firstEmergency.data().fullName || 'Un amigo'
+            name: firstEmergency.data().fullName || t('common.loading')
           });
         } else {
           setEmergencyFriend(null);
         }
       });
-
-      return () => unsubscribeStatus();
     });
 
-    return () => unsubscribeFriends();
+    return () => {
+      unsubscribeFriends();
+      if (unsubscribeStatus) unsubscribeStatus();
+    };
   }, [currentUser]);
 
   return (
@@ -230,6 +235,7 @@ function RootLayoutContent() {
       setUser(currentUser);
       setInitializing(false); // Ya tenemos respuesta, dejar de mostrar splash
     });
+
     return unsubscribe; // Limpiar el listener al desmontar
   }, []);
 
@@ -239,44 +245,38 @@ function RootLayoutContent() {
   return (
     <>
       {user && <FriendSafetyWatcher />}
-      {/* NavigationThemeProvider adapta el tema de React Navigation al tema de la app */}
+      
       <NavigationThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
-
         {!user ? (
-          // ── SIN SESIÓN: mostrar Login o Registro ──────────────────────────
           showRegister ? (
             <Register onSwitchToLogin={() => setShowRegister(false)} />
           ) : (
             <Login onSwitchToRegister={() => setShowRegister(true)} />
           )
         ) : (
-          // ── CON SESIÓN: mostrar el Drawer con las pantallas ───────────────
           <Drawer
             drawerContent={(props) => <CustomDrawerContent {...props} />}
-          screenOptions={{
-            headerShown: false,     // Ocultamos el header por defecto (cada pantalla tiene el suyo)
-            drawerStyle: {
-              backgroundColor: colors.background,
-              width: scale(280),    // Ancho del drawer escalado al dispositivo
-            },
-            drawerType: 'front',    // El drawer se desliza sobre el contenido
-          }}
-        >
-          {/* Registrar las pantallas del drawer */}
-          <Drawer.Screen name="(tabs)"      options={{ title: 'Lara' }} />
-          <Drawer.Screen name="user"        options={{ title: t('drawer.user') }} />
-          <Drawer.Screen name="safeWalk"    options={{ title: t('drawer.safewalk') }} />
-          <Drawer.Screen name="options"     options={{ title: t('drawer.options') }} />
-          {/* Las pantallas friends y notifications no aparecen en el menú lateral */}
-          <Drawer.Screen name="friends"     options={{ title: 'Mis Amigos', drawerItemStyle: { display: 'none' } }} />
-          <Drawer.Screen name="notifications" options={{ title: 'Notificaciones', drawerItemStyle: { display: 'none' } }} />
-          <Drawer.Screen name="friendProfile" options={{ title: 'Perfil de Amigo', drawerItemStyle: { display: 'none' } }} />
-        </Drawer>
-      )}
+            screenOptions={{
+              headerShown: false,
+              drawerStyle: {
+                backgroundColor: colors.background,
+                width: scale(280),
+              },
+              drawerType: 'front',
+            }}
+          >
+            <Drawer.Screen name="(tabs)"      options={{ title: 'Lara' }} />
+            <Drawer.Screen name="user"        options={{ title: t('drawer.user') }} />
+            <Drawer.Screen name="safeWalk"    options={{ title: t('drawer.safewalk') }} />
+            <Drawer.Screen name="options"     options={{ title: t('drawer.options') }} />
+            <Drawer.Screen name="friends"     options={{ title: t('friends.title'), drawerItemStyle: { display: 'none' } }} />
+            <Drawer.Screen name="notifications" options={{ title: t('friends.requests'), drawerItemStyle: { display: 'none' } }} />
+            <Drawer.Screen name="friendProfile" options={{ title: t('friendProfile.title'), drawerItemStyle: { display: 'none' } }} />
+          </Drawer>
+        )}
 
-      {/* Barra de estado del sistema (hora, batería, etc.) */}
-      <StatusBar style={isDark ? "light" : "dark"} />
-    </NavigationThemeProvider>
+        <StatusBar style={isDark ? "light" : "dark"} />
+      </NavigationThemeProvider>
     </>
   );
 }

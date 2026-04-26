@@ -36,8 +36,11 @@ interface UserItem {
   isPending?: boolean; // Nueva propiedad para detectar solicitudes enviadas
 }
 
+import { useTranslation } from '@/lib/LanguageContext';
+
 export default function FriendsScreen() {
   const { colors, isDark } = useAppTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => getStyles(colors, isDark), [colors, isDark]);
 
   const [searchText, setSearchText] = useState('');
@@ -169,11 +172,11 @@ export default function FriendsScreen() {
         {isFriend ? (
           <View style={styles.friendBadge}>
             <Ionicons name="chatbubble-ellipses-outline" size={ms(18)} color={colors.text} />
-            <Text style={styles.badgeText}>Amigo</Text>
+            <Text style={styles.badgeText}>{t('friends.alreadyFriends')}</Text>
           </View>
         ) : isPending ? (
           <View style={styles.pendingBadge}>
-            <Text style={styles.pendingText}>Pendiente</Text>
+            <Text style={styles.pendingText}>{t('friends.pending')}</Text>
           </View>
         ) : (
           <TouchableOpacity style={styles.addButton} onPress={() => sendRequest(item)}>
@@ -190,7 +193,7 @@ export default function FriendsScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={ms(24)} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Amigos</Text>
+        <Text style={styles.headerTitle}>{t('friends.title')}</Text>
         <View style={{ width: ms(40) }} />
       </View>
 
@@ -198,7 +201,7 @@ export default function FriendsScreen() {
         <Ionicons name="search-outline" size={ms(20)} color={colors.textSecondary} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Busca amigos o nuevos usuarios..."
+          placeholder={t('friends.searchPlaceholder')}
           placeholderTextColor={colors.textSecondary}
           value={searchText}
           onChangeText={handleSearch}
@@ -223,7 +226,7 @@ export default function FriendsScreen() {
             <View style={styles.emptyContainer}>
               <Ionicons name="people-outline" size={ms(60)} color={colors.border} />
               <Text style={styles.emptyTitle}>
-                {searchText ? 'No se encontraron resultados' : 'Aún no tienes amigos'}
+                {searchText ? t('friends.noResults') : t('friends.noFriends')}
               </Text>
               <Text style={styles.emptySubtitle}>
                 {searchText ? 'Prueba con otro nombre o @username' : 'Busca personas para conectar'}

@@ -17,7 +17,8 @@
  */
 
 import { auth, db } from '@/lib/firebase';
-import { fs, ms, scale, verticalScale } from '@/lib/responsive';
+import { scale, verticalScale, ms, fs } from '@/lib/responsive';
+import { useTranslation } from '@/lib/LanguageContext';
 import { useAppTheme } from '@/lib/ThemeProvider';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
@@ -66,6 +67,7 @@ export default function UserProfileScreen() {
   const navigation = useNavigation();
   const user = auth.currentUser; // Usuario actualmente autenticado
   const { colors, isDark } = useAppTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => getStyles(colors, isDark), [colors, isDark]);
 
   // Estado con los datos del perfil cargados desde Firestore
@@ -176,7 +178,7 @@ export default function UserProfileScreen() {
                 @{userData?.username || 'usuario'} • {userData?.city || 'Planeta Tierra'}
               </Text>
               <Text style={styles.userEmail}>
-                {user?.email || 'email@ejemplo.com'} · Nacimiento: {userData?.birthDate || 'Sin especificar'}
+                {user?.email || 'email@example.com'} · {t('options.language')}: {userData?.birthDate || t('friendProfile.notAvailable')}
               </Text>
             </>
           )}
@@ -187,13 +189,13 @@ export default function UserProfileScreen() {
           {/* Número de alertas reales del usuario (viene de Firestore) */}
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>{userAlerts.length}</Text>
-            <Text style={styles.statLabel}>Alertas</Text>
+            <Text style={styles.statLabel}>{t('profile.alerts')}</Text>
           </View>
         </View>
 
         {/* ── SECCIÓN: Historial de alertas ───────────────────────────── */}
         <View style={styles.detailsSection}>
-          <Text style={styles.sectionTitle}>Actividad Reciente</Text>
+          <Text style={styles.sectionTitle}>{t('profile.history')}</Text>
 
           {userAlerts.length > 0 ? (
             // Mostrar las primeras 5 alertas del historial
@@ -207,7 +209,7 @@ export default function UserProfileScreen() {
                   day: 'numeric', month: 'short',
                   hour: '2-digit', minute: '2-digit'
                 })
-                : 'Reciente';
+                : t('common.loading');
 
               return (
                 <View key={alert.id} style={styles.activityCard}>
@@ -216,7 +218,7 @@ export default function UserProfileScreen() {
                     <Ionicons name={config.icon} size={20} color={config.color} />
                   </View>
                   <View style={styles.activityInfo}>
-                    <Text style={styles.activityText}>Reportaste: {alert.typeName}</Text>
+                    <Text style={styles.activityText}>{t('common.reportedAt')}: {alert.typeName}</Text>
                     <Text style={styles.activityTime}>{timeString}</Text>
                   </View>
                 </View>
@@ -226,7 +228,7 @@ export default function UserProfileScreen() {
             // Estado vacío: el usuario aún no ha creado alertas
             <View style={styles.emptyActivity}>
               <Ionicons name="documents-outline" size={ms(40)} color={colors.textSecondary} />
-              <Text style={styles.emptyText}>Aún no has reportado incidentes.</Text>
+              <Text style={styles.emptyText}>{t('profile.noHistory')}</Text>
             </View>
           )}
         </View>
@@ -239,13 +241,13 @@ export default function UserProfileScreen() {
           onPress={() => router.push('/friends')}
         >
           <Ionicons name="people-outline" size={ms(20)} color={colors.background} />
-          <Text style={styles.addFriendsButtonText}>Amigos</Text>
+          <Text style={styles.addFriendsButtonText}>{t('friends.alreadyFriends')}</Text>
         </TouchableOpacity>
 
         {/* ── Botón de compartir perfil (TODO: implementar funcionalidad) ── */}
         <TouchableOpacity style={styles.shareButton}>
           <Ionicons name="share-social-outline" size={ms(20)} color={colors.text} />
-          <Text style={styles.shareButtonText}>Compartir Perfil</Text>
+          <Text style={styles.shareButtonText}>{t('profile.shareProfile')}</Text>
         </TouchableOpacity>
 
       </ScrollView>

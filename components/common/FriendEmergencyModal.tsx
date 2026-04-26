@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@/lib/ThemeProvider';
 import { fs, ms, scale, verticalScale } from '@/lib/responsive';
 import { router } from 'expo-router';
+import { useTranslation } from '@/lib/LanguageContext';
 
 interface FriendEmergencyModalProps {
   isVisible: boolean;
@@ -25,6 +26,7 @@ export default function FriendEmergencyModal({
   onClose 
 }: FriendEmergencyModalProps) {
   const { colors, isDark } = useAppTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => getStyles(colors, isDark), [colors, isDark]);
 
   const handleGoToProfile = () => {
@@ -45,10 +47,10 @@ export default function FriendEmergencyModal({
             <Ionicons name="warning" size={ms(60)} color="#FF3B30" />
           </View>
           
-          <Text style={styles.alertTitle}>¡ALERTA DE EMERGENCIA!</Text>
+          <Text style={styles.alertTitle}>{t('emergencyModal.title')}</Text>
           
           <Text style={styles.friendText}>
-            Tu amigo <Text style={{ fontWeight: 'bold' }}>{friendName}</Text> no ha reportado movimiento y no responde a las alertas.
+            {t('emergencyModal.body').replace('{name}', friendName)}
           </Text>
 
           <View style={styles.buttonContainer}>
@@ -58,7 +60,7 @@ export default function FriendEmergencyModal({
               activeOpacity={0.8}
             >
               <Ionicons name="eye-outline" size={ms(20)} color="white" />
-              <Text style={styles.profileButtonText}>Ver Ubicación y Perfil</Text>
+              <Text style={styles.profileButtonText}>{t('emergencyModal.viewProfile')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
@@ -66,7 +68,7 @@ export default function FriendEmergencyModal({
               onPress={onClose}
               activeOpacity={0.7}
             >
-              <Text style={styles.closeButtonText}>Ignorar por ahora</Text>
+              <Text style={styles.closeButtonText}>{t('emergencyModal.close')}</Text>
             </TouchableOpacity>
           </View>
         </View>

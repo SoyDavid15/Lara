@@ -2,23 +2,26 @@
  * friendProfile.tsx — Perfil Público de un Amigo (Con Alertas)
  */
 
-import { db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { fs, ms, scale, verticalScale } from '@/lib/responsive';
 import { useAppTheme } from '@/lib/ThemeProvider';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { doc, onSnapshot } from 'firebase/firestore';
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { LanguageProvider, useTranslation } from '@/lib/LanguageContext';
+import { deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
+  Animated,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
-  Animated
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import MapComponent from '@/components/MapComponent';
 
 interface FriendData {
   fullName: string;
@@ -36,10 +39,12 @@ interface FriendData {
 export default function FriendProfileScreen() {
   const { uid } = useLocalSearchParams<{ uid: string }>();
   const { colors, isDark } = useAppTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => getStyles(colors, isDark), [colors, isDark]);
 
   const [friend, setFriend] = useState<FriendData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   // Animación para el parpadeo de alerta
   const flashAnim = useRef(new Animated.Value(0)).current;
@@ -51,7 +56,7 @@ export default function FriendProfileScreen() {
       if (docSnap.exists()) {
         const data = docSnap.data() as FriendData;
         setFriend(data);
-        
+
         // Si está en ALERT, iniciar animación de parpadeo
         if (data.walkState === 'ALERT') {
           Animated.loop(
@@ -70,8 +75,42 @@ export default function FriendProfileScreen() {
     return () => unsubscribe();
   }, [uid]);
 
+  const handleRemoveFriend = () => {
+    Alert.alert(
+      t('friendProfile.removeConfirmTitle'),
+      t('friendProfile.removeConfirmDesc').replace('{name}', friend?.fullName || ''),
+      [
+        { text: t('common.cancel'), style: "cancel" },
+        { 
+          text: t('common.delete'), 
+          style: "destructive",
+          onPress: async () => {
+            const currentUser = auth.currentUser;
+            if (!currentUser || !uid) return;
+
+            try {
+              setIsRemoving(true);
+              // 1. Eliminar de mi lista de amigos
+              await deleteDoc(doc(db, 'users', currentUser.uid, 'friends', uid));
+              // 2. Eliminar de su lista de amigos (reciprocidad)
+              await deleteDoc(doc(db, 'users', uid, 'friends', currentUser.uid));
+              
+              Alert.alert("Éxito", "Amigo eliminado correctamente");
+              router.replace('/friends');
+            } catch (error) {
+              console.error("Error al eliminar amigo:", error);
+              Alert.alert("Error", "No se pudo eliminar al amigo.");
+            } finally {
+              setIsRemoving(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const getTimeAgo = (timestamp: any) => {
-    if (!timestamp) return 'No disponible';
+    if (!timestamp) return t('friendProfile.notAvailable');
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
@@ -92,9 +131,9 @@ export default function FriendProfileScreen() {
   if (!friend) {
     return (
       <View style={[styles.container, styles.centerBox]}>
-        <Text style={{ color: colors.text }}>Usuario no encontrado</Text>
+        <Text style={{ color: colors.text }}>{t('friendProfile.userNotFound')}</Text>
         <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20 }}>
-          <Text style={{ color: colors.primary }}>Volver</Text>
+          <Text style={{ color: colors.primary }}>{t('common.back')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -109,7 +148,7 @@ export default function FriendProfileScreen() {
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={ms(24)} color={isEmergency ? 'white' : colors.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, isEmergency && { color: 'white' }]}>Perfil de Amigo</Text>
+          <Text style={[styles.headerTitle, isEmergency && { color: 'white' }]}>{t('friendProfile.title')}</Text>
           <View style={{ width: ms(40) }} />
         </View>
 
@@ -123,66 +162,87 @@ export default function FriendProfileScreen() {
             </View>
             <Text style={[styles.name, isEmergency && { color: 'white' }]}>{friend.fullName}</Text>
             <Text style={[styles.username, isEmergency && { color: 'rgba(255,255,255,0.8)' }]}>
-              @{friend.username} • {friend.city || 'Ubicación oculta'}
+              @{friend.username} • {friend.city || t('friendProfile.notAvailable')}
             </Text>
           </View>
 
           {/* Estado SafeWalk */}
           <View style={[
-            styles.statusCard, 
+            styles.statusCard,
             isEmergency ? styles.emergencyCard : (friend.isSafeWalkActive ? styles.activeCard : styles.inactiveCard)
           ]}>
             <View style={styles.statusHeader}>
-              <Ionicons 
-                name={isEmergency ? "warning" : (friend.isSafeWalkActive ? "shield-checkmark" : "shield-outline")} 
-                size={ms(32)} 
-                color={isEmergency ? "white" : (friend.isSafeWalkActive ? "#4CAF50" : colors.textSecondary)} 
+              <Ionicons
+                name={isEmergency ? "warning" : (friend.isSafeWalkActive ? "shield-checkmark" : "shield-outline")}
+                size={ms(32)}
+                color={isEmergency ? "white" : (friend.isSafeWalkActive ? "#4CAF50" : colors.textSecondary)}
               />
               <View style={styles.statusInfo}>
-                <Text style={[styles.statusTitle, isEmergency && { color: 'rgba(255,255,255,0.8)' }]}>Estado de SafeWalk</Text>
+                <Text style={[styles.statusTitle, isEmergency && { color: 'rgba(255,255,255,0.8)' }]}>{t('friendProfile.safewalkState')}</Text>
                 <Text style={[
                   styles.statusValue,
                   { color: isEmergency ? "white" : (friend.isSafeWalkActive ? "#4CAF50" : colors.textSecondary) }
                 ]}>
-                  {isEmergency ? '¡EMERGENCIA!' : (friend.isSafeWalkActive ? 'ACTIVO' : 'INACTIVO')}
+                  {isEmergency ? t('friendProfile.emergency') : (friend.isSafeWalkActive ? t('friendProfile.active') : t('friendProfile.inactive'))}
                 </Text>
               </View>
             </View>
-            
+
             {friend.isSafeWalkActive && (
               <View style={[styles.lastUpdateRow, isEmergency && { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
                 <Ionicons name="time-outline" size={ms(16)} color={isEmergency ? "white" : colors.textSecondary} />
                 <Text style={[styles.lastUpdateText, isEmergency && { color: 'white' }]}>
-                  Última señal: {getTimeAgo(friend.location?.lastUpdated)}
+                  {t('friendProfile.lastSignal')}: {getTimeAgo(friend.location?.lastUpdated)}
                 </Text>
               </View>
             )}
 
             <Text style={[styles.statusDescription, isEmergency && { color: 'white' }]}>
-              {isEmergency 
-                ? '¡ATENCIÓN! Tu amigo está en una posible situación de peligro. No hay movimiento y no responde.'
-                : friend.isSafeWalkActive 
-                  ? 'Tu amigo está siendo monitoreado por Lara para su seguridad.'
-                  : 'Tu amigo no tiene el rastreo activo en este momento.'}
+              {isEmergency
+                ? t('friendProfile.descriptionEmergency')
+                : friend.isSafeWalkActive
+                  ? t('friendProfile.descriptionActive')
+                  : t('friendProfile.descriptionInactive')}
             </Text>
           </View>
 
-          {/* Acciones Rápidas */}
-          <View style={styles.actionsGrid}>
-            <TouchableOpacity style={[styles.actionItem, isEmergency && styles.emergencyAction]}>
-              <View style={[styles.actionIcon, isEmergency && { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-                <Ionicons name="chatbubble-ellipses-outline" size={ms(24)} color={isEmergency ? "white" : colors.text} />
+          {/* Mapa de Ubicación (Mini) */}
+          {friend.location && (
+            <View style={styles.mapCard}>
+              <Text style={styles.mapTitle}>
+                <Ionicons name="location" size={fs(14)} color={colors.primary} /> {t('friendProfile.currentLocation')}
+              </Text>
+              <View style={styles.mapWrapper}>
+                <MapComponent 
+                  location={friend.location}
+                  isEmergency={isEmergency}
+                  colors={colors}
+                  isDark={isDark}
+                  t={t}
+                />
               </View>
-              <Text style={[styles.actionText, isEmergency && { color: 'white' }]}>Chatear</Text>
-            </TouchableOpacity>
+              <Text style={styles.mapFootnote}>{t('friendProfile.mapDisclaimer')}</Text>
+            </View>
+          )}
 
-            <TouchableOpacity style={[styles.actionItem, isEmergency && styles.emergencyActionRed]}>
-              <View style={[styles.actionIcon, isEmergency && { backgroundColor: 'rgba(255,255,255,0.3)' }]}>
-                <Ionicons name="call" size={ms(24)} color={isEmergency ? "white" : colors.text} />
-              </View>
-              <Text style={[styles.actionText, isEmergency && { color: 'white' }]}>Llamar ahora</Text>
+          {/* Botón Eliminar Amigo */}
+          {!isEmergency && (
+            <TouchableOpacity 
+              style={styles.removeButton} 
+              onPress={handleRemoveFriend}
+              disabled={isRemoving}
+            >
+              {isRemoving ? (
+                <ActivityIndicator size="small" color="#FF3B30" />
+              ) : (
+                <>
+                  <Ionicons name="person-remove-outline" size={ms(20)} color="#FF3B30" />
+                  <Text style={styles.removeButtonText}>{t('friendProfile.removeFriend')}</Text>
+                </>
+              )}
             </TouchableOpacity>
-          </View>
+          )}
+
         </ScrollView>
       </SafeAreaView>
     </Animated.View>
@@ -208,7 +268,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'rgba(150,150,150,0.1)',
   },
   headerTitle: { fontSize: fs(18), fontWeight: '800', color: colors.text },
-  scrollContent: { paddingHorizontal: scale(25), paddingTop: verticalScale(20) },
+  scrollContent: { paddingHorizontal: scale(25), paddingTop: verticalScale(20), paddingBottom: 40 },
   profileSection: { alignItems: 'center', marginBottom: verticalScale(40) },
   avatar: {
     width: ms(100),
@@ -247,9 +307,9 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   statusInfo: { marginLeft: scale(15) },
   statusTitle: { fontSize: fs(14), color: colors.textSecondary, fontWeight: '700' },
   statusValue: { fontSize: fs(18), fontWeight: '900', marginTop: 2 },
-  lastUpdateRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
+  lastUpdateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: verticalScale(15),
     backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
     paddingHorizontal: 12,
@@ -259,32 +319,77 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   },
   lastUpdateText: { fontSize: fs(13), color: colors.textSecondary, marginLeft: 6, fontWeight: '500' },
   statusDescription: { fontSize: fs(14), color: colors.text, lineHeight: fs(20), opacity: 0.8 },
-  actionsGrid: { flexDirection: 'row', gap: scale(20) },
-  actionItem: { 
-    flex: 1, 
-    backgroundColor: colors.card, 
-    borderRadius: ms(20), 
-    paddingVertical: verticalScale(20),
+  removeButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: verticalScale(8),
+    paddingHorizontal: scale(15),
+    borderRadius: ms(10),
+    borderWidth: 0.5,
+    borderColor: '#FF3B3022',
+    marginTop: 40,
+    alignSelf: 'center', // No ocupa todo el ancho
+    backgroundColor: isDark ? 'rgba(255,59,48,0.03)' : 'rgba(255,59,48,0.01)',
+  },
+  removeButtonText: {
+    color: '#FF3B30',
+    fontSize: fs(12), // Más pequeño
+    fontWeight: '600',
+    marginLeft: 8,
+    opacity: 0.7, // Un poco más transparente para ser discreto
+  },
+  mapCard: {
+    backgroundColor: colors.card,
+    borderRadius: ms(24),
+    padding: ms(15),
     borderWidth: 1,
     borderColor: colors.border,
+    marginBottom: verticalScale(30),
   },
-  emergencyAction: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderColor: 'white',
+  mapTitle: {
+    fontSize: fs(14),
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: verticalScale(10),
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  emergencyActionRed: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderColor: 'white',
+  mapWrapper: {
+    height: verticalScale(150),
+    borderRadius: ms(16),
+    overflow: 'hidden',
+    backgroundColor: isDark ? '#111' : '#EEE',
   },
-  actionIcon: { 
-    width: ms(48), 
-    height: ms(48), 
-    borderRadius: ms(24), 
-    backgroundColor: isDark ? '#1A1A1A' : '#F0F0F0', 
-    justifyContent: 'center', 
+  map: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  mapFootnote: {
+    fontSize: fs(11),
+    color: colors.textSecondary,
+    marginTop: verticalScale(8),
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  markerContainer: {
+    width: ms(30),
+    height: ms(30),
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
   },
-  actionText: { fontSize: fs(14), fontWeight: '700', color: colors.text },
+  markerPulse: {
+    position: 'absolute',
+    width: ms(30),
+    height: ms(30),
+    borderRadius: ms(15),
+    backgroundColor: colors.primary,
+    opacity: 0.2,
+  },
+  markerDot: {
+    width: ms(12),
+    height: ms(12),
+    borderRadius: ms(6),
+    borderWidth: 2,
+    borderColor: 'white',
+  },
 });

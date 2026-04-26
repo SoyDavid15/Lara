@@ -29,11 +29,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/lib/ThemeProvider';
 import { useSafeWalk } from '@/lib/SafeWalkContext';
 import { scale, verticalScale, ms, fs } from '@/lib/responsive';
+import { useTranslation } from '@/lib/LanguageContext';
 
 export default function SafeWalkScreen() {
   // ── Hooks de navegación y tema ───────────────────────────────────────────
   const navigation = useNavigation();
   const { colors, isDark } = useAppTheme(); // Colores del tema (claro/oscuro)
+  const { t } = useTranslation();
 
   // useMemo recalcula los estilos SOLO cuando el tema cambia (optimización)
   const styles = useMemo(() => getStyles(colors, isDark), [colors, isDark]);
@@ -88,7 +90,7 @@ export default function SafeWalkScreen() {
           <Ionicons name="menu-outline" size={30} color={colors.text} />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Camina Seguro</Text>
+        <Text style={styles.headerTitle}>{t('safewalk.title')}</Text>
 
         {/* Espaciador vacío para centrar el título */}
         <View style={{ width: 30 }} />
@@ -112,12 +114,12 @@ export default function SafeWalkScreen() {
 
           {/* Texto de estado debajo del escudo */}
           <Text style={styles.statusText}>
-            {isTracking ? 'RASTREO ACTIVO' : 'RASTREO DESACTIVADO'}
+            {isTracking ? t('safewalk.tracking') : t('safewalk.inactive')}
           </Text>
 
           {/* Descripción explicativa */}
           <Text style={styles.description}>
-            Al activar esta función, tu ubicación se compartirá con la central cada 50 metros incluso si navegas a otra pantalla.
+            {t('safewalk.description')}
           </Text>
         </View>
 
@@ -125,8 +127,8 @@ export default function SafeWalkScreen() {
         <View style={styles.actionCard}>
           <View style={styles.row}>
             <View>
-              <Text style={styles.actionTitle}>Seguimiento en vivo</Text>
-              <Text style={styles.actionSubtitle}>Activo en segundo plano</Text>
+              <Text style={styles.actionTitle}>{t('safewalk.liveTracking')}</Text>
+              <Text style={styles.actionSubtitle}>{t('safewalk.backgroundActive')}</Text>
             </View>
 
             {/* Switch (interruptor): llama a toggleTracking al cambiar */}
@@ -142,7 +144,7 @@ export default function SafeWalkScreen() {
 
         {/* ── SECCIÓN: Botón de pánico SOS ─────────────────────────────── */}
         <View style={styles.emergencySection}>
-          <Text style={styles.sectionTitle}>Asistencia Inmediata</Text>
+          <Text style={styles.sectionTitle}>{t('safewalk.assistanceTitle')}</Text>
 
           {/* Botón SOS - TODO: agregar lógica real de emergencia aquí */}
           <TouchableOpacity
@@ -150,7 +152,7 @@ export default function SafeWalkScreen() {
             activeOpacity={0.8}
           >
             <Ionicons name="warning-outline" size={24} color="white" />
-            <Text style={styles.emergencyButtonText}>BOTÓN DE PÁNICO (SOS)</Text>
+            <Text style={styles.emergencyButtonText}>{t('safewalk.panicButton')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -170,13 +172,13 @@ export default function SafeWalkScreen() {
         <View style={styles.warningOverlay}>
           <View style={styles.warningBox}>
             <Ionicons name="alert-circle" size={60} color="#FFA500" />
-            <Text style={styles.warningTitle}>¿Te encuentras bien?</Text>
+            <Text style={styles.warningTitle}>{t('safewalk.warningTitle')}</Text>
             <Text style={styles.warningText}>
-              No hemos detectado avance de más de 5 metros en el último minuto.
+              {t('safewalk.warningText')}
             </Text>
             {/* Al presionar este botón, confirmSafe() resetea los contadores */}
             <TouchableOpacity style={styles.safeButton} onPress={confirmSafe}>
-              <Text style={styles.safeButtonText}>Pulsa aquí si estás a salvo</Text>
+              <Text style={styles.safeButtonText}>{t('safewalk.warningButton')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -187,14 +189,14 @@ export default function SafeWalkScreen() {
       {walkState === 'ALERT' && (
         <View style={styles.alertOverlay}>
           <Ionicons name="warning" size={100} color="#ff4444" />
-          <Text style={styles.alertTitle}>¡ALERTA!</Text>
-          <Text style={styles.alertText}>No hay movimiento y no respondiste a la notificación.</Text>
+          <Text style={styles.alertTitle}>{t('safewalk.alertTitle')}</Text>
+          <Text style={styles.alertText}>{t('safewalk.alertText')}</Text>
           <Text style={styles.alertSubtext}>
-            Se ha enviado un aviso de emergencia a la central.
+            {t('safewalk.alertSubtext')}
           </Text>
           {/* Botón para salir del estado de emergencia */}
           <TouchableOpacity style={styles.resetButton} onPress={confirmSafe}>
-            <Text style={styles.resetButtonText}>Cancelar / Restablecer</Text>
+            <Text style={styles.resetButtonText}>{t('safewalk.alertButton')}</Text>
           </TouchableOpacity>
         </View>
       )}

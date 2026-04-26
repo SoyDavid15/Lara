@@ -2,25 +2,10 @@
  * translations.ts
  *
  * Diccionario de textos de la app LARA en todos los idiomas soportados.
- *
- * ¿Cómo agregar un nuevo texto?
- *   1. Agrégalo en el objeto 'es' con la clave que quieras.
- *   2. Agrégalo también en 'en' con la traducción al inglés.
- *   3. Úsalo en cualquier componente con: t('seccion.clave')
- *
- * ¿Cómo agregar un nuevo idioma?
- *   1. Agrega su código al tipo Locale (ej: 'fr' para francés).
- *   2. Copia la estructura de 'es' y traduce todos los valores.
- *   3. Actualiza el selector de idioma en options.tsx.
  */
 
-// Tipo que define los códigos de idioma válidos
 export type Locale = 'es' | 'en';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// OBJETO DE TRADUCCIONES
-// Estructura: translations[idioma][sección][clave] = 'texto'
-// ─────────────────────────────────────────────────────────────────────────────
 export const translations = {
   // ── ESPAÑOL ───────────────────────────────────────────────────────────────
   es: {
@@ -51,13 +36,93 @@ export const translations = {
       verified: 'Verificada ✅',
       unverified: 'No verificada ⚠️',
       reportedAt: 'Reportado a las',
+      loading: 'Cargando...',
+      back: 'Volver',
+      save: 'Guardar',
+      delete: 'Eliminar',
     },
-    // Textos del menú lateral (drawer)
     drawer: {
-        home: 'Inicio',
-        user: 'Usuario',
-        safewalk: 'Camina seguro',
-        options: 'Opciones'
+      home: 'Inicio',
+      user: 'Usuario',
+      safewalk: 'Camina seguro',
+      options: 'Opciones'
+    },
+    friends: {
+      title: 'Mis Amigos',
+      searchPlaceholder: 'Buscar usuarios por nombre...',
+      pending: 'Pendiente',
+      addFriend: 'Agregar',
+      alreadyFriends: 'Amigos',
+      noFriends: 'Aún no tienes amigos agregados.',
+      requests: 'Solicitudes',
+      noResults: 'No se encontraron usuarios.',
+    },
+    friendProfile: {
+      title: 'Perfil de Amigo',
+      userNotFound: 'Usuario no encontrado',
+      safewalkState: 'Estado de SafeWalk',
+      active: 'ACTIVO',
+      inactive: 'INACTIVO',
+      emergency: '¡EMERGENCIA!',
+      lastSignal: 'Última señal',
+      notAvailable: 'No disponible',
+      descriptionActive: 'Tu amigo está siendo monitoreado por Lara para su seguridad.',
+      descriptionInactive: 'Tu amigo no tiene el rastreo activo en este momento.',
+      descriptionEmergency: '¡ATENCIÓN! Tu amigo está en una posible situación de peligro. No hay movimiento y no responde.',
+      removeFriend: 'Eliminar de mis amigos',
+      removeConfirmTitle: 'Eliminar amigo',
+      removeConfirmDesc: '¿Estás seguro de que quieres eliminar a {name} de tu lista de amigos?',
+    },
+    profile: {
+      title: 'Perfil de Usuario',
+      stats: 'Estadísticas',
+      alerts: 'Alertas',
+      karma: 'Karma',
+      achievements: 'Logros',
+      history: 'Historial de Alertas',
+      noHistory: 'Aún no has reportado ninguna alerta.',
+      shareProfile: 'Compartir Perfil',
+      editProfile: 'Editar Perfil',
+      unverified: 'Perfil no verificado',
+    },
+    safewalk: {
+      title: 'Camina Seguro',
+      start: 'Iniciar SafeWalk',
+      stop: 'Detener SafeWalk',
+      tracking: 'RASTREO ACTIVO',
+      inactive: 'RASTREO DESACTIVADO',
+      description: 'Al activar esta función, tu ubicación se compartirá con la central cada 50 metros incluso si navegas a otra pantalla.',
+      liveTracking: 'Seguimiento en vivo',
+      backgroundActive: 'Activo en segundo plano',
+      assistanceTitle: 'Asistencia Inmediata',
+      panicButton: 'BOTÓN DE PÁNICO (SOS)',
+      warningTitle: '¿Te encuentras bien?',
+      warningText: 'No hemos detectado avance de más de 5 metros en el último minuto.',
+      warningButton: 'Pulsa aquí si estás a salvo',
+      alertTitle: '¡ALERTA!',
+      alertText: 'No hay movimiento y no respondiste a la notificación.',
+      alertSubtext: 'Se ha enviado un aviso de emergencia a la central.',
+      alertButton: 'Cancelar / Restablecer',
+    },
+    posts: {
+      createTitle: 'Crear Publicación',
+      titlePlaceholder: 'Título (opcional)',
+      bodyPlaceholder: '¿Qué está pasando?',
+      publish: 'Publicar',
+      publishing: 'Publicando...',
+      success: 'Post publicado con éxito (durará 24h)',
+      categoryArroyo: 'Arroyo',
+      categoryAccidente: 'Accidente',
+      categoryIncendio: 'Incendio',
+      categoryRobo: 'Robo',
+      selectCategory: '¿Qué está pasando?',
+      selectCategoryError: 'Por favor selecciona una categoría.',
+    },
+    emergencyModal: {
+      title: '¡ALERTA DE EMERGENCIA!',
+      body: '{name} parece estar en peligro y no responde. ¡Comunícate con él de inmediato!',
+      viewProfile: 'Ver Perfil',
+      close: 'Ignorar por ahora',
     }
   },
 
@@ -90,15 +155,95 @@ export const translations = {
       verified: 'Verified ✅',
       unverified: 'Not verified ⚠️',
       reportedAt: 'Reported at',
+      loading: 'Loading...',
+      back: 'Back',
+      save: 'Save',
+      delete: 'Delete',
     },
     drawer: {
-        home: 'Home',
-        user: 'User',
-        safewalk: 'Safe Walk',
-        options: 'Options'
+      home: 'Home',
+      user: 'User',
+      safewalk: 'Safe Walk',
+      options: 'Options'
+    },
+    friends: {
+      title: 'My Friends',
+      searchPlaceholder: 'Search users by name...',
+      pending: 'Pending',
+      addFriend: 'Add',
+      alreadyFriends: 'Friends',
+      noFriends: 'You haven\'t added any friends yet.',
+      requests: 'Requests',
+      noResults: 'No users found.',
+    },
+    friendProfile: {
+      title: 'Friend Profile',
+      userNotFound: 'User not found',
+      safewalkState: 'SafeWalk State',
+      active: 'ACTIVE',
+      inactive: 'INACTIVE',
+      emergency: 'EMERGENCY!',
+      lastSignal: 'Last signal',
+      notAvailable: 'Not available',
+      descriptionActive: 'Your friend is being monitored by Lara for their safety.',
+      descriptionInactive: 'Your friend does not have tracking active at this moment.',
+      descriptionEmergency: 'ATTENTION! Your friend is in a possible dangerous situation. No movement and no response.',
+      removeFriend: 'Remove from my friends',
+      removeConfirmTitle: 'Remove friend',
+      removeConfirmDesc: 'Are you sure you want to remove {name} from your friends list?',
+    },
+    profile: {
+      title: 'User Profile',
+      stats: 'Statistics',
+      alerts: 'Alerts',
+      karma: 'Karma',
+      achievements: 'Achievements',
+      history: 'Alert History',
+      noHistory: 'You haven\'t reported any alerts yet.',
+      shareProfile: 'Share Profile',
+      editProfile: 'Edit Profile',
+      unverified: 'Unverified Profile',
+    },
+    safewalk: {
+      title: 'Safe Walk',
+      start: 'Start SafeWalk',
+      stop: 'Stop SafeWalk',
+      tracking: 'TRACKING ACTIVE',
+      inactive: 'TRACKING INACTIVE',
+      description: 'By activating this feature, your location will be shared with central every 50 meters even if you navigate to another screen.',
+      liveTracking: 'Live Tracking',
+      backgroundActive: 'Active in background',
+      assistanceTitle: 'Immediate Assistance',
+      panicButton: 'PANIC BUTTON (SOS)',
+      warningTitle: 'Are you okay?',
+      warningText: 'We haven\'t detected movement of more than 5 meters in the last minute.',
+      warningButton: 'Press here if you are safe',
+      alertTitle: 'ALERT!',
+      alertText: 'No movement and you didn\'t respond to the notification.',
+      alertSubtext: 'An emergency notice has been sent to central.',
+      alertButton: 'Cancel / Reset',
+    },
+    posts: {
+      createTitle: 'Create Post',
+      titlePlaceholder: 'Title (optional)',
+      bodyPlaceholder: 'What\'s happening?',
+      publish: 'Publish',
+      publishing: 'Publishing...',
+      success: 'Post published successfully (will last 24h)',
+      categoryArroyo: 'Stream/Arroyo',
+      categoryAccidente: 'Traffic Accident',
+      categoryIncendio: 'Fire',
+      categoryRobo: 'Robbery',
+      selectCategory: 'What is happening?',
+      selectCategoryError: 'Please select a category.',
+    },
+    emergencyModal: {
+      title: 'EMERGENCY ALERT!',
+      body: '{name} seems to be in danger and is not responding. Contact them immediately!',
+      viewProfile: 'View Profile',
+      close: 'Ignore for now',
     }
   },
 };
 
-/** Tipo inferido de la estructura de traducciones en español (usado para type-safety) */
 export type TranslationKeys = typeof translations.es;

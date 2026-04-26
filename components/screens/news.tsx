@@ -175,7 +175,9 @@ const News = () => {
             );
 
             const documentSnapshots = await getDocs(postsQuery);
-            const data = documentSnapshots.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+            const data = documentSnapshots.docs
+                .map(doc => ({ id: doc.id, ...doc.data() } as Post))
+                .filter((p: any) => p.type !== 'map_alert'); // Excluir alertas del mapa
 
             setPosts(data);
             // Guardar el último documento para la paginación
@@ -209,7 +211,9 @@ const News = () => {
             );
 
             const documentSnapshots = await getDocs(nextQuery);
-            const newData = documentSnapshots.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+            const newData = documentSnapshots.docs
+                .map(doc => ({ id: doc.id, ...doc.data() } as Post))
+                .filter((p: any) => p.type !== 'map_alert'); // Excluir alertas del mapa
 
             if (newData.length > 0) {
                 setPosts(prev => [...prev, ...newData]); // Agregar al final de la lista
@@ -244,7 +248,9 @@ const News = () => {
 
         // onSnapshot → escucha cambios en tiempo real
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+            const data = snapshot.docs
+                .map(doc => ({ id: doc.id, ...doc.data() } as Post))
+                .filter((p: any) => p.type !== 'map_alert'); // Excluir alertas del mapa
             setPosts(data);
             if (snapshot.docs.length > 0 && !lastVisible) {
                 setLastVisible(snapshot.docs[snapshot.docs.length - 1]);

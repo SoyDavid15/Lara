@@ -18,18 +18,27 @@
  *   title, body, createdAt, expiresAt (24h), author ("Anónimo")
  */
 
+import { useTranslation } from '@/lib/LanguageContext';
+import { db } from '@/lib/firebase';
+import { fs, ms, scale, verticalScale } from '@/lib/responsive';
+import { Ionicons } from '@expo/vector-icons';
+import { addDoc, collection, serverTimestamp, Timestamp } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
-  StyleSheet, Text, View, TextInput, TouchableOpacity,
-  Dimensions, KeyboardAvoidingView, Platform, Alert, ActivityIndicator
+    ActivityIndicator,
+    Alert,
+    Dimensions,
+    KeyboardAvoidingView, Platform,
+    StyleSheet, Text,
+    TextInput, TouchableOpacity,
+    View
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, runOnJS
+    runOnJS,
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming
 } from 'react-native-reanimated';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { scale, verticalScale, ms, fs } from '@/lib/responsive';
 
 // Dimensiones de la pantalla para calcular el tamaño del modal
 const { width, height } = Dimensions.get('window');
@@ -40,18 +49,21 @@ interface NewPostProps {
 }
 
 const NewPost = ({ isVisible, onClose }: NewPostProps) => {
+    const { t } = useTranslation();
     // isMounted controla si el componente está en el árbol de React
     // (false → retorna null → no renderiza nada)
-    const [isMounted, setIsMounted]     = useState(isVisible);
-    const [title, setTitle]             = useState('');
-    const [body, setBody]               = useState('');
+    const [isMounted, setIsMounted] = useState(isVisible);
+    const [title, setTitle] = useState('');
+    const [body, setBody] = useState('');
+    const [category, setCategory] = useState<string | null>(null);
     const [isPublishing, setIsPublishing] = useState(false);
 
-    // ── Valores animados (react-native-reanimated) ───────────────────────
-    // useSharedValue → valores que corren en el hilo de UI (más fluido que Animated API)
-    const scaleAnim   = useSharedValue(0);  // Escala del modal (0=invisible, 1=tamaño completo)
-    const opacityAnim = useSharedValue(0);  // Opacidad del fondo oscuro
-
+    const categories = [
+        { id: 'arroyo', label: t('posts.categoryArroyo'), icon: 'water' },
+        { id: 'accidente', label: t('posts.categoryAccidente'), icon: 'car-sport' },
+        { id: 'incendio', label: t('posts.categoryIncendio'), icon: 'flame' },
+        { id: 'robo', label: t('posts.categoryRobo'), icon: 'hand-right' },
+    ];
 
     // ─────────────────────────────────────────────────────────────────────
     // FUNCIÓN: handlePublish
@@ -59,8 +71,12 @@ const NewPost = ({ isVisible, onClose }: NewPostProps) => {
     // El post expira en 24 horas (expiresAt = ahora + 24h en ms).
     // ─────────────────────────────────────────────────────────────────────
     const handlePublish = async () => {
+        if (!category) {
+            Alert.alert(t('common.error'), t('posts.selectCategoryError'));
+            return;
+        }
         if (!title.trim() || !body.trim()) {
-            Alert.alert("Error", "Por favor completa el título y el contenido.");
+            Alert.alert(t('common.error'), t('posts.bodyPlaceholder'));
             return;
         }
 
@@ -71,54 +87,46 @@ const NewPost = ({ isVisible, onClose }: NewPostProps) => {
 
             // Crear el documento en Firestore
             await addDoc(collection(db, "posts"), {
-                title:     title.trim(),
-                body:      body.trim(),
-                createdAt: serverTimestamp(), // Timestamp del servidor (no del cliente)
+                title: title.trim(),
+                body: body.trim(),
+                category: category,
+                createdAt: serverTimestamp(),
                 expiresAt: expiresAt,
-                author:    "Anónimo"          // TODO: Usar nombre real del usuario
+                author: "Anónimo",
+                type: 'news'
             });
 
-            Alert.alert("Éxito", "Post publicado con éxito (durará 24h)");
+            Alert.alert(t('common.success'), t('posts.success'));
             // Limpiar formulario y cerrar modal
             setTitle('');
             setBody('');
+            setCategory(null);
             onClose();
         } catch (error: any) {
             console.error("Error publicando post:", error);
-            // Mensajes de error descriptivos según el tipo de error
-            let errorMessage = "Hubo un problema al publicar tu post.";
-            if (error.code === 'permission-denied')
-                errorMessage = "Permiso denegado. Revisa las reglas de seguridad de Firestore.";
-            else if (error.code === 'not-found')
-                errorMessage = "No se encontró la base de datos o la colección.";
-            else if (error.message)
-                errorMessage = `Error: ${error.message}`;
-            Alert.alert("Error de Publicación", errorMessage);
+            Alert.alert(t('common.error'), "Hubo un problema al publicar tu post.");
         } finally {
             setIsPublishing(false);
         }
     };
-
+    // ── Valores animados (react-native-reanimated) ───────────────────────
+    const scaleAnim = useSharedValue(0);
+    const opacityAnim = useSharedValue(0);
 
     // ─────────────────────────────────────────────────────────────────────
     // EFECTO: Animación de entrada/salida del modal
-    // Cuando isVisible cambia a true → animar aparición
-    // Cuando isVisible cambia a false → animar desaparición y desmontar
-    //
-    // runOnJS → llama a funciones de React (setState) desde el hilo de animación
     // ─────────────────────────────────────────────────────────────────────
     /* eslint-disable react-hooks/exhaustive-deps */
     useEffect(() => {
         if (isVisible) {
-            setIsMounted(true); // Montar primero, luego animar
-            scaleAnim.value   = withTiming(1, { duration: 300 });
+            setIsMounted(true);
+            scaleAnim.value = withTiming(1, { duration: 300 });
             opacityAnim.value = withTiming(1, { duration: 300 });
         } else {
-            // Animar salida, luego desmontar cuando termine
-            scaleAnim.value   = withTiming(0, { duration: 200 });
+            scaleAnim.value = withTiming(0, { duration: 200 });
             opacityAnim.value = withTiming(0, { duration: 200 }, (finished) => {
                 if (finished) {
-                    runOnJS(setIsMounted)(false); // Desmontar DESPUÉS de que termina la animación
+                    runOnJS(setIsMounted)(false);
                 }
             });
         }
@@ -149,19 +157,19 @@ const NewPost = ({ isVisible, onClose }: NewPostProps) => {
                 <View style={styles.header}>
                     {/* Botón cancelar */}
                     <TouchableOpacity onPress={onClose} disabled={isPublishing}>
-                        <Text style={styles.cancelText}>Cancelar</Text>
+                        <Text style={styles.cancelText}>{t('common.cancel')}</Text>
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Nuevo Post</Text>
+                    <Text style={styles.headerTitle}>{t('posts.createTitle')}</Text>
                     {/* Botón publicar (o spinner si está publicando) */}
                     <TouchableOpacity
-                        style={[styles.postButton, isPublishing && styles.postButtonDisabled]}
+                        style={[styles.postButton, (isPublishing || !category) && styles.postButtonDisabled]}
                         onPress={handlePublish}
-                        disabled={isPublishing}
+                        disabled={isPublishing || !category}
                     >
                         {isPublishing ? (
                             <ActivityIndicator size="small" color="black" />
                         ) : (
-                            <Text style={styles.postButtonText}>Publicar</Text>
+                            <Text style={styles.postButtonText}>{t('posts.publish')}</Text>
                         )}
                     </TouchableOpacity>
                 </View>
@@ -171,18 +179,44 @@ const NewPost = ({ isVisible, onClose }: NewPostProps) => {
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
                     style={styles.form}
                 >
+                    {/* Selección de Categoría */}
+                    <Text style={styles.sectionLabel}>{t('posts.selectCategory')}</Text>
+                    <View style={styles.categoryGrid}>
+                        {categories.map((cat) => (
+                            <TouchableOpacity
+                                key={cat.id}
+                                style={[
+                                    styles.categoryItem,
+                                    category === cat.id && styles.categoryItemActive
+                                ]}
+                                onPress={() => setCategory(cat.id)}
+                            >
+                                <Ionicons
+                                    name={cat.icon as any}
+                                    size={ms(24)}
+                                    color={category === cat.id ? 'white' : '#999'}
+                                />
+                                <Text style={[
+                                    styles.categoryLabel,
+                                    category === cat.id && styles.categoryLabelActive
+                                ]}>
+                                    {cat.label}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+
                     {/* Campo: Título */}
-                    <View>
+                    <View style={{ marginTop: verticalScale(10) }}>
                         <TextInput
-                            placeholder="Título de tu noticia"
+                            placeholder={t('posts.titlePlaceholder')}
                             placeholderTextColor="#666"
                             style={styles.titleInput}
                             value={title}
                             onChangeText={setTitle}
                             editable={!isPublishing}
-                            maxLength={50} // Límite de caracteres del título
+                            maxLength={50}
                         />
-                        {/* Contador de caracteres (se pone rojo al acercarse al límite) */}
                         <Text style={[
                             styles.charCount,
                             title.length >= 45 ? styles.charCountWarning : null
@@ -194,14 +228,14 @@ const NewPost = ({ isVisible, onClose }: NewPostProps) => {
                     {/* Campo: Cuerpo del post */}
                     <View>
                         <TextInput
-                            placeholder="¿Qué está pasando?"
+                            placeholder={t('posts.bodyPlaceholder')}
                             placeholderTextColor="#666"
                             style={styles.bodyInput}
-                            multiline // Permite múltiples líneas
+                            multiline
                             value={body}
                             onChangeText={setBody}
                             editable={!isPublishing}
-                            maxLength={200} // Límite de caracteres del cuerpo
+                            maxLength={200}
                         />
                         <Text style={[
                             styles.charCount,
@@ -209,14 +243,6 @@ const NewPost = ({ isVisible, onClose }: NewPostProps) => {
                         ]}>
                             {body.length} / 200
                         </Text>
-                    </View>
-
-                    {/* Sección multimedia (TODO: implementar carga de fotos/videos) */}
-                    <View style={styles.mediaSection}>
-                        <TouchableOpacity style={styles.mediaButton}>
-                            <Ionicons name="images-outline" size={24} color="#FFF" />
-                            <Text style={styles.mediaButtonText}>Agregar Foto o Video</Text>
-                        </TouchableOpacity>
                     </View>
                 </KeyboardAvoidingView>
 
@@ -281,6 +307,43 @@ const styles = StyleSheet.create({
     postButtonText: {
         color: 'black',
         fontWeight: 'bold',
+    },
+    sectionLabel: {
+        color: '#999',
+        fontSize: fs(14),
+        fontWeight: 'bold',
+        marginBottom: verticalScale(15),
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+    },
+    categoryGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: ms(10),
+        marginBottom: verticalScale(20),
+    },
+    categoryItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#222',
+        paddingHorizontal: scale(12),
+        paddingVertical: verticalScale(8),
+        borderRadius: ms(12),
+        borderWidth: 1,
+        borderColor: '#333',
+    },
+    categoryItemActive: {
+        backgroundColor: '#FF3B30',
+        borderColor: '#FF3B30',
+    },
+    categoryLabel: {
+        color: '#666',
+        marginLeft: scale(8),
+        fontSize: fs(14),
+        fontWeight: '600',
+    },
+    categoryLabelActive: {
+        color: 'white',
     },
     form: { padding: ms(20) },
     titleInput: {
